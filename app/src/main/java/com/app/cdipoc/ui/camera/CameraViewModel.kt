@@ -16,10 +16,6 @@ import com.app.cdipoc.model.liveness.ResponseLiveness
 import com.app.cdipoc.model.ocr.ResponseOcr
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import okhttp3.CipherSuite
-import okhttp3.ConnectionSpec
-import okhttp3.TlsVersion
-import okhttp3.internal.http2.Http2Connection
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -49,7 +45,7 @@ class CameraViewModel : ViewModel() {
                 override fun onFailure(call: Call<ResponseOcr>, t: Throwable) {
                     val res = ResponseOcr(null)
                     res.errorMessage = Utils.failureMessage(context, t)
-                    result?.value = res
+                    result.value = res
                 }
             })
         return result
@@ -58,7 +54,7 @@ class CameraViewModel : ViewModel() {
     fun liveness(
         context: Context,
         body: HashMap<String, String>
-    ): MutableLiveData<ResponseLiveness>? {
+    ): MutableLiveData<ResponseLiveness> {
         val result = MutableLiveData<ResponseLiveness>()
         ApiClient.getClient(Constant.BASE_URL_PASSIVE).faceLiveness(ApiHeader.headerClient(context), body)
             .enqueue(object : Callback<ResponseLiveness> {
@@ -85,7 +81,7 @@ class CameraViewModel : ViewModel() {
                 override fun onFailure(call: Call<ResponseLiveness>, t: Throwable) {
                     val res = ResponseLiveness(null)
                     res.message = Utils.failureMessage(context, t)
-                    result?.value = res
+                    result.value = res
                 }
 
             })
@@ -96,7 +92,7 @@ class CameraViewModel : ViewModel() {
     fun enrollData(
         context: Context,
         body: RequestEnroll
-    ): MutableLiveData<ResponseEnroll>? {
+    ): MutableLiveData<ResponseEnroll> {
         val result = MutableLiveData<ResponseEnroll>()
         ApiClient.getClient(Constant.BASE_URL_ENROLL).enRoll( body)
             .enqueue(object : Callback<ResponseEnroll> {
@@ -123,7 +119,7 @@ class CameraViewModel : ViewModel() {
                 override fun onFailure(call: Call<ResponseEnroll>, t: Throwable) {
                     val res = ResponseEnroll(null)
                     res.errorMessage = Utils.failureMessage(context, t)
-                    result?.value = res
+                    result.value = res
                 }
 
             })
@@ -134,7 +130,7 @@ class CameraViewModel : ViewModel() {
     fun biometric(
         context: Context,
         body: BiometricRequest
-    ): MutableLiveData<ResponseBiometric>? {
+    ): MutableLiveData<ResponseBiometric> {
         val result = MutableLiveData<ResponseBiometric>()
         ApiClient.getClient(Constant.BASE_URL_BIOMETRIC).biometric(body)
             .enqueue(object : Callback<ResponseBiometric> {
@@ -161,7 +157,7 @@ class CameraViewModel : ViewModel() {
                 override fun onFailure(call: Call<ResponseBiometric>, t: Throwable) {
                     val res = ResponseBiometric(null)
                     res.errorMessage = Utils.failureMessage(context, t)
-                    result?.value = res
+                    result.value = res
                 }
 
             })
