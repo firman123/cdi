@@ -4,29 +4,23 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import com.app.cdipoc.databinding.ActivityVerificationBinding
-import com.app.cdipoc.extension.Constant
-import com.app.cdipoc.extension.PrefManager
-import com.app.cdipoc.model.ocr.Demographics
 import com.app.cdipoc.ui.camera.FaceCameraActivity
-import com.google.gson.Gson
 
 class VerificationActivity : AppCompatActivity() {
     private lateinit var binding: ActivityVerificationBinding
     private var type: String? = null
-    private var nik = ""
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityVerificationBinding.inflate(layoutInflater)
         setContentView(binding.root)
         initBundleData()
-        getNik()
         actionListener()
     }
 
     private fun initBundleData() {
         val bundle = intent.extras
         bundle?.let {
-            bundle.apply { ->
+            bundle.apply {
                 type = getString("type")
 
                 if(type.equals("biometric")) {
@@ -36,14 +30,6 @@ class VerificationActivity : AppCompatActivity() {
         }
     }
 
-    private fun getNik() {
-        val dataKtp = PrefManager.getString(this, Constant.PREFERENCE.DATA_KTP, "")
-        if(dataKtp?.isNotEmpty() == true) {
-            val gson = Gson().fromJson(dataKtp, Demographics::class.java)
-            binding.etNik.setText(gson.nik)
-        }
-     }
-
     private fun actionListener() {
         binding.btnRetake.setOnClickListener {
             binding.etNik.setText("")
@@ -52,7 +38,12 @@ class VerificationActivity : AppCompatActivity() {
         binding.btnContinue.setOnClickListener {
 
             if(binding.etNik.text.toString().isEmpty()) {
-                binding.etNik.setError("NIK is required")
+                binding.etNik.error = "NIK is required"
+                return@setOnClickListener
+            }
+
+            if(binding.etNik.text.length != 16) {
+                binding.etNik.error = "NIK must be 16 digit number"
                 return@setOnClickListener
             }
 

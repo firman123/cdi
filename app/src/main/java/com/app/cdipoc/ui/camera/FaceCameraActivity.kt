@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -23,21 +22,19 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import com.app.cdipoc.model.biometric.Biometric
-import java.io.IOException
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 
-import android.graphics.drawable.BitmapDrawable
-import android.util.Base64
-import androidx.camera.core.ImageCapture.OnImageCapturedCallback
-import androidx.core.graphics.drawable.toBitmap
+import android.os.Build
 import com.app.cdipoc.model.enrolldata.RequestEnroll
+import com.app.cdipoc.extension.RotateImageHelper.rotateImage
+import androidx.camera.core.ImageCapture
+
+
+
 
 
 class FaceCameraActivity : AppCompatActivity() {
-    private var imageString = ""
     private lateinit var binding: ActivityFaceCameraBinding
     private var imageCapture: ImageCapture? = null
     private lateinit var outputDirectory: File
@@ -114,20 +111,17 @@ class FaceCameraActivity : AppCompatActivity() {
 
             when (type) {
                 "passive" -> {
-                    val imageString =
-                        ConverterImage().convertToBase64(this@FaceCameraActivity, savedUri).replace("\n", "")
-                    sendFoto(imageString)
+                    val imageString = ConverterImage().encodeImage(rotateImage(photoFile.path)).replace("\n", "")
+                    sendPassiveLiveness(imageString)
                 }
                 "enroll_data" -> {
-                    val imageString =
-                        ConverterImage().convertToBase64(this@FaceCameraActivity, savedUri).replace("\n", "")
-                    sendEnrollData(nik, imageString, savedUri.toString())
+                    val imageString = ConverterImage().encodeImage(rotateImage(photoFile.path)).replace("\n", "")
+                    sendEnrollData(nik, imageString, photoFile.path)
                 }
 
                 "biometric" -> {
-                    val imageString =
-                        ConverterImage().convertToBase64(this@FaceCameraActivity, savedUri).replace("\n", "")
-                    sendBiometric(nik, imageString, savedUri.toString())
+                    val imageString = ConverterImage().encodeImage(rotateImage(photoFile.path)).replace("\n", "")
+                    sendBiometric(nik, imageString, photoFile.path)
                 }
             }
         }
@@ -136,11 +130,7 @@ class FaceCameraActivity : AppCompatActivity() {
 
 
     private fun takePhoto() {
-        // Get a stable reference of the
-        // modifiable image capture use case
         val imageCapture = imageCapture ?: return
-
-        // Create time-stamped output file to hold the image
         photoFile = File(
             outputDirectory,
             SimpleDateFormat(
@@ -149,13 +139,7 @@ class FaceCameraActivity : AppCompatActivity() {
             ).format(System.currentTimeMillis()) + ".jpg"
         )
 
-        // Create output options object which contains file + metadata
         val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-
-        // Set up image capture listener,
-        // which is triggered after photo has
-        // been taken
-
         imageCapture.takePicture(
             outputOptions,
             ContextCompat.getMainExecutor(this),
@@ -167,27 +151,13 @@ class FaceCameraActivity : AppCompatActivity() {
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                     savedUri = output.savedUri ?: Uri.fromFile(photoFile)
                     binding.ivCapture.visibility = View.VISIBLE
-//                    binding.ivCapture.setImageURI(savedUri)
                     cameraProvider.unbindAll()
 
                     binding.viewFinder.visibility = View.GONE
                     binding.btnCamera.visibility = View.GONE
                     binding.ivClose.visibility = View.VISIBLE
                     binding.btnSend.visibility = View.VISIBLE
-
-//                    loadingDialog.startLoading()
-//
-//                    imageString =
-//                        ConverterImage().convertToBase64V2(this@FaceCameraActivity, savedUri)
-                   imageString = ConverterImage().convertToBase64(this@FaceCameraActivity, savedUri)
-
-                    val bytes = Base64.decode(imageString, Base64.DEFAULT)
-                    val bimap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                    binding.ivCapture.setImageBitmap(bimap)
-
-//                    Log.d(TAG, "jck:uri>> $jck" +"--260991")
-
-//                    loadingDialog.stopLoading()
+                    binding.ivCapture.setImageBitmap(rotateImage(photoFile.path))
 
                 }
             })
@@ -199,14 +169,40 @@ class FaceCameraActivity : AppCompatActivity() {
             // Used to bind the lifecycle of cameras to the lifecycle owner
             cameraProvider = cameraProviderFuture.get()
 
-            // Preview
-            val preview = Preview.Builder()
-                .build()
-                .also {
-                    it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
+            val preview = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                display?.rotation?.let { it ->
+                    Preview.Builder()
+                        .setTargetRotation(it)
+                        .build()
+                        .also {
+                            it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
+                        }
                 }
+            } else {
+                windowManager.defaultDisplay.rotation.let {
+                    Preview.Builder()
+                        .setTargetRotation(it)
+                        .build()
+                        .also { it ->
+                            it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
+                        }
+                }
+            }
 
-            imageCapture = ImageCapture.Builder().build()
+
+            imageCapture = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                display?.rotation?.let {
+                    ImageCapture.Builder()
+                        .setTargetRotation(it)
+                        .build()
+                }
+            } else {
+                windowManager.defaultDisplay.rotation.let {
+                    ImageCapture.Builder()
+                        .setTargetRotation(it)
+                        .build()
+                }
+            }
 
             // Select back camera as a default
             val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
@@ -227,11 +223,11 @@ class FaceCameraActivity : AppCompatActivity() {
     }
 
     @SuppressLint("SetTextI18n")
-    private fun sendFoto(image: String) {
+    private fun sendPassiveLiveness(image: String) {
         loadingDialog.startLoading()
         val body = HashMap<String, String>()
         body["image"] = image
-        viewModel.liveness(this, body)?.observe(this, { it ->
+        viewModel.liveness(this, body).observe(this, { it ->
             loadingDialog.stopLoading()
             if (it.status == 200) {
                 binding.clResult.visibility = View.VISIBLE
@@ -239,9 +235,15 @@ class FaceCameraActivity : AppCompatActivity() {
                 binding.ivClose.visibility = View.GONE
                 binding.ivBack.visibility = View.VISIBLE
 
+
+                if(it.liveness?.status == false) {
+                    binding.tvPercentage.setTextColor(getColor(R.color.red))
+                    binding.ivCheck.setColorFilter(getColor(R.color.red))
+                }
+
                 binding.tvExplanation.text = "Result"
                 (kotlin.math.round(it.liveness?.probability?.toDouble() ?: 0.0)
-                    .toString() + " " + it.liveness?.status).also {
+                    .toString() + "% " + it.liveness?.status).also {
                     binding.tvPercentage.text = it
                 }
             } else {
@@ -250,17 +252,17 @@ class FaceCameraActivity : AppCompatActivity() {
         })
     }
 
-    private fun sendEnrollData(nik: String?, image: String, uri: String) {
+    private fun sendEnrollData(nik: String?, image: String, photoFile: String) {
         loadingDialog.startLoading()
         val body = RequestEnroll(nik, image)
-        viewModel.enrollData(this, body)?.observe(this, { it ->
+        viewModel.enrollData(this, body).observe(this, { it ->
             loadingDialog.stopLoading()
 
             if (it.errorMessage.equals("SUCCESS", true)) {
                 val intent = Intent(this, VerificationResultActivity::class.java)
                 intent.putExtra("type", "enroll_data")
                 intent.putExtra("nik", nik)
-                intent.putExtra("photo", uri)
+                intent.putExtra("photo", photoFile)
                 startActivity(intent)
             } else {
                 Toast.makeText(this, it.errorMessage, Toast.LENGTH_SHORT).show()
@@ -297,15 +299,21 @@ class FaceCameraActivity : AppCompatActivity() {
         biometricRequest.isVerifyWithImage = false
         biometricRequest.verifyIdCardFaceImage = false
 
-        viewModel.biometric(this, biometricRequest)?.observe(this, { it ->
+        viewModel.biometric(this, biometricRequest).observe(this, { it ->
             loadingDialog.stopLoading()
 
             if (it.errorMessage.equals("SUCCESS", true)) {
-                val intent = Intent(this, VerificationResultActivity::class.java)
-                intent.putExtra("type", "biometric")
-                intent.putExtra("nik", nik)
-                intent.putExtra("photo", uri)
-                startActivity(intent)
+                if(it?.verificationScore?:0.0 < 0) {
+                    Toast.makeText(this, "Not registered, please enroll before biometric verification", Toast.LENGTH_SHORT).show()
+                } else {
+                    val intent = Intent(this, VerificationResultActivity::class.java)
+                    intent.putExtra("type", "biometric")
+                    intent.putExtra("nik", nik)
+                    intent.putExtra("photo", uri)
+                    intent.putExtra("score", it.verificationScore)
+                    intent.putExtra("match", it.verificationResult)
+                    startActivity(intent)
+                }
             } else {
                 Toast.makeText(this, it.errorMessage, Toast.LENGTH_SHORT).show()
             }

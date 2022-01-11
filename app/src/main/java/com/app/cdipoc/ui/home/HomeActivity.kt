@@ -15,9 +15,11 @@ import com.app.cdipoc.ui.contact.ContactUsActivity
 import com.app.cdipoc.ui.login.LoginActivity
 import com.app.cdipoc.ui.verification.VerificationActivity
 import android.R.menu
+import android.util.Log
 
 import android.view.MenuInflater
 import com.app.cdipoc.extension.Constant
+import java.text.DecimalFormat
 
 
 class HomeActivity : AppCompatActivity() {
@@ -28,6 +30,11 @@ class HomeActivity : AppCompatActivity() {
         setContentView(binding.root)
         initToolbar()
         actionListener()
+
+        val df = DecimalFormat("#.######")
+        val jck = 0.48534008860588074
+        val abc = df.format(jck)
+        Log.d("TAG", "initBundleData: " + abc)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

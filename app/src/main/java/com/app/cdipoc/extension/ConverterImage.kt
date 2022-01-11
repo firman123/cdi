@@ -16,7 +16,7 @@ class ConverterImage {
         return encodeImage(selectedImage)
     }
 
-    private fun encodeImage(bitmap: Bitmap?): String {
+    fun encodeImage(bitmap: Bitmap?): String {
         val stream = ByteArrayOutputStream()
         bitmap?.compress(Bitmap.CompressFormat.JPEG, 20, stream)
         val bytes = stream.toByteArray()

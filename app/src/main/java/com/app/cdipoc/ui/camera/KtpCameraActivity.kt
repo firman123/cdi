@@ -1,9 +1,10 @@
 package com.app.cdipoc.ui.camera
 
 import android.content.Intent
-import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.OrientationEventListener
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -13,9 +14,10 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import com.app.cdipoc.R
 import com.app.cdipoc.databinding.ActivityKtpCameraBinding
-import com.app.cdipoc.extension.ConverterImage
-import com.app.cdipoc.ui.result.ResultActivity
 import com.app.cdipoc.dialog.LoadingDialog
+import com.app.cdipoc.extension.ConverterImage
+import com.app.cdipoc.extension.RotateImageHelper
+import com.app.cdipoc.ui.result.ResultActivity
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -24,12 +26,12 @@ import java.util.concurrent.Executors
 
 
 class KtpCameraActivity : AppCompatActivity() {
+    private lateinit var photoFile: File
     private lateinit var binding: ActivityKtpCameraBinding
     private var imageCapture: ImageCapture? = null
     private lateinit var outputDirectory: File
     private lateinit var viewModel: CameraViewModel
     private lateinit var loadingDialog: LoadingDialog
-    private lateinit var savedUri: Uri
     private lateinit var cameraProvider: ProcessCameraProvider
     private lateinit var cameraExecutor: ExecutorService
     private lateinit var camera: Camera
@@ -81,8 +83,7 @@ class KtpCameraActivity : AppCompatActivity() {
         }
 
         binding.btnSend.setOnClickListener {
-            val imageString =
-                ConverterImage().convertToBase64(this@KtpCameraActivity, savedUri)
+            val imageString = ConverterImage().encodeImage(RotateImageHelper.rotateImage(photoFile.path))
             sendFoto(imageString)
         }
     }
@@ -102,7 +103,7 @@ class KtpCameraActivity : AppCompatActivity() {
         val imageCapture = imageCapture ?: return
 
         // Create time-stamped output file to hold the image
-        val photoFile = File(
+        photoFile = File(
             outputDirectory,
             SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis()) + ".jpg"
         )
@@ -122,10 +123,9 @@ class KtpCameraActivity : AppCompatActivity() {
                 }
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    savedUri = Uri.fromFile(photoFile)
                     // set the saved uri to the image view
                     binding.ivCapture.visibility = View.VISIBLE
-                    binding.ivCapture.setImageURI(savedUri)
+                    binding.ivCapture.setImageBitmap(RotateImageHelper.rotateImage(photoFile.path))
                     binding.viewFinder.visibility = View.GONE
                     cameraProvider.unbindAll()
                     
@@ -168,13 +168,40 @@ class KtpCameraActivity : AppCompatActivity() {
             cameraProvider = cameraProviderFuture.get()
 
             // Preview
-            val preview = Preview.Builder()
-                .build()
-                .also {
-                    it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
+            val preview = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                display?.rotation?.let {
+                    Preview.Builder()
+                        .setTargetRotation(it)
+                        .build()
+                        .also { it ->
+                            it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
+                        }
                 }
+            } else {
+               windowManager.defaultDisplay.rotation.let {
+                   Preview.Builder()
+                       .setTargetRotation(it)
+                       .build()
+                       .also {
+                           it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
+                       }
+               }
+            }
 
-            imageCapture = ImageCapture.Builder().build()
+
+            imageCapture = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                display?.rotation?.let {
+                    ImageCapture.Builder()
+                        .setTargetRotation(it)
+                        .build()
+                }
+            } else {
+                windowManager.defaultDisplay.rotation.let {
+                    ImageCapture.Builder()
+                        .setTargetRotation(it)
+                        .build()
+                }
+            }
 
             // Select back camera as a default
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
@@ -193,6 +220,38 @@ class KtpCameraActivity : AppCompatActivity() {
             }
 
         }, ContextCompat.getMainExecutor(this))
+    }
+
+//    override fun onStart() {
+//        super.onStart()
+//        orientationEventListener.enable()
+//    }
+//
+//    override fun onStop() {
+//        super.onStop()
+//        orientationEventListener.disable()
+//    }
+
+
+    private val orientationEventListener by lazy {
+        object : OrientationEventListener(this) {
+            override fun onOrientationChanged(orientation: Int) {
+                Log.d("ROTATION_VALUE : ", orientation.toString())
+//                if (orientation == UNKNOWN_ORIENTATION) {
+//                    return
+//                }
+//
+//                val rotation = when (orientation) {
+//                    in 45 until 135 -> Surface.ROTATION_270
+//                    in 135 until 225 -> Surface.ROTATION_180
+//                    in 225 until 315 -> Surface.ROTATION_90
+//                    else -> Surface.ROTATION_0
+//                }
+//
+//                imageAnalysis.targetRotation = rotation
+//                imageCapture.targetRotation = rotation
+            }
+        }
     }
 
     private fun getOutputDirectory(): File {

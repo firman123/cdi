@@ -14,12 +14,13 @@ import com.app.cdipoc.ui.home.HomeActivity
 import com.app.cdipoc.dialog.LoadingDialog
 import com.app.cdipoc.extension.Constant
 import com.app.cdipoc.extension.PrefManager
+import com.app.cdipoc.ui.contact.ContactUsActivity
 import com.google.firebase.firestore.FirebaseFirestore
 
 class LoginActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityLoginBinding
     private val db = FirebaseFirestore.getInstance()
-    private val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
+    private lateinit var binding: ActivityLoginBinding
+    private val emails = arrayOf("gmail", "yahoo", "soho", "outlook", "rocketmail", "yandex", "ymail")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,6 +33,10 @@ class LoginActivity : AppCompatActivity() {
 
         binding.btnLogin.setOnClickListener {
             handleActionButton()
+        }
+
+        binding.tvContactUs.setOnClickListener {
+            startActivity(Intent(this, ContactUsActivity::class.java))
         }
     }
 
@@ -65,9 +70,11 @@ class LoginActivity : AppCompatActivity() {
             return
         }
 
-        if (email.contains("gmail", false)) {
-            binding.etEmail.error = "Gmail not allowed"
-            return
+        for (bannedEmail in emails) {
+            if(email.contains(bannedEmail, false)) {
+                binding.etEmail.error = "$bannedEmail not allowed, please enter corporate email!"
+                return
+            }
         }
 
         val dialog = LoadingDialog(this)

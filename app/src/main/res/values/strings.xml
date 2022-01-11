@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">cdipoc</string>
+    <string name="app_name">CDIPOC</string>
     <string name="error_code_401">Pengguna tidak diautentikasi, silakan masuk lagi!</string>
     <string name="error_code_404">Halaman tidak ditemukan, silakan coba lagi nanti!</string>
     <string name="error_code_405">Metode tidak diizinkan, silakan coba lagi nanti!</string>
@@ -9,4 +9,5 @@
     <string name="error_connection">Tidak dapat terhubung ke server, periksa koneksi internet Anda!</string>
     <string name="error_json_syntax">Terjadi kesalahan respons dari server, silakan hubungi administrator!</string>
     <string name="no_data">Tidak ada data yang tersedia!</string>
+    <string name="email">info@cdi-system.com</string>
 </resources>

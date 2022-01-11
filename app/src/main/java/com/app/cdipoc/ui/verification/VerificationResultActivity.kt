@@ -1,11 +1,16 @@
 package com.app.cdipoc.ui.verification
 
+import android.annotation.SuppressLint
 import android.content.Intent
-import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
+import android.view.View
+import com.app.cdipoc.R
 import com.app.cdipoc.databinding.ActivityVerificationResultBinding
+import com.app.cdipoc.extension.RotateImageHelper
 import com.app.cdipoc.ui.home.HomeActivity
+import java.text.DecimalFormat
 
 class VerificationResultActivity : AppCompatActivity() {
     private lateinit var binding: ActivityVerificationResultBinding
@@ -18,16 +23,38 @@ class VerificationResultActivity : AppCompatActivity() {
         actionListener()
     }
 
+    @SuppressLint("SetTextI18n")
     private fun initBundleData() {
         val bundle = intent.extras
         if(bundle!=null) {
             val type = bundle.getString("type")
             val nik = bundle.getString("nik")
             val photo = bundle.getString("photo")
-            val photoUri = Uri.parse(photo)
 
+            if(type.equals("biometric", false)) {
+                binding.clValueEnroll.visibility = View.GONE
+                val score = bundle.getDouble("score")
+                val match = bundle.getBoolean("match")
+                val df = DecimalFormat("#.######")
+                val format = df.format(score)
+                if(match) {
+                    binding.tvBiometricSuccess.text = format.toString()
+                    binding.tvMatch.text = "Match"
+                } else {
+                    binding.tvBiometricSuccess.setTextColor(getColor(R.color.red))
+                    binding.ivCheckBiometric?.visibility = View.GONE
+                    binding.tvMatch.setTextColor(getColor(R.color.red))
+                    binding.tvBiometricSuccess.text = format.toString()
+                    binding.tvMatch.text = "Unmatch"
+
+                }
+            } else {
+                binding.clValueBiometric.visibility = View.GONE
+            }
+
+            val bitmap = RotateImageHelper.rotateImage(photo)
             binding.etNik.setText(nik)
-            binding.profileImage.setImageURI(photoUri)
+            binding.profileImage.setImageBitmap(bitmap)
         }
     }
 
