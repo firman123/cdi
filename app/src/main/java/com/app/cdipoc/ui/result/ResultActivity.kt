@@ -2,38 +2,46 @@ package com.app.cdipoc.ui.result
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import com.app.cdipoc.databinding.ActivityResultBinding
 import com.app.cdipoc.extension.Constant
 import com.app.cdipoc.extension.PrefManager
+import com.app.cdipoc.model.demography.DemographyRequest
 import com.app.cdipoc.model.ocr.Demographics
 import com.app.cdipoc.model.ocr.ResponseOcr
+import com.app.cdipoc.ui.camera.CameraViewModel
 import com.app.cdipoc.ui.home.HomeActivity
 import com.google.gson.Gson
-import java.io.FileReader
 
 class ResultActivity : AppCompatActivity() {
     private lateinit var binding: ActivityResultBinding
+    private lateinit var viewModel: CameraViewModel
+    private var processDemography = false
+    private var ocrResult: ResponseOcr? = null
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityResultBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        initViewModel()
         initBundleData()
         actionListener()
 
     }
 
+    private fun initViewModel() {
+        viewModel = ViewModelProvider(this).get(CameraViewModel::class.java)
+    }
+
     private fun initBundleData() {
-
         val bundle = intent.extras
-
         bundle?.let {
             bundle.apply {
-                val ktp: Demographics? = getParcelable("data")
+                ocrResult = getParcelable("data")
+                val ktp = ocrResult?.demographics
                 if (ktp != null) {
 
                     binding.etNik.setText(ktp.nik)
@@ -63,6 +71,9 @@ class ResultActivity : AppCompatActivity() {
                         Constant.PREFERENCE.DATA_KTP,
                         jsonKtp
                     )
+
+                    processDemography = true
+                    binding.btnContinue.text = "Process Demography"
                 }
             }
         }
@@ -70,7 +81,12 @@ class ResultActivity : AppCompatActivity() {
 
     private fun actionListener() {
         binding.btnContinue.setOnClickListener {
-            gotoHome()
+            if(processDemography) {
+                val demographics = ocrResult?.demographics
+//                viewModel.demography(this, DemographyRequest(demographics?.alamat, "", "", demographics?.jenisKelamin, demographics?.nama, demographics?.nik, ) )
+            } else {
+                gotoHome()
+            }
         }
 
         binding.btnRetake.setOnClickListener {

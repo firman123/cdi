@@ -1,25 +1,22 @@
 package com.app.cdipoc.ui.home
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import androidx.appcompat.app.AppCompatActivity
 import com.app.cdipoc.R
 import com.app.cdipoc.databinding.ActivityHomeBinding
 import com.app.cdipoc.dialog.KeyDialog
+import com.app.cdipoc.dialog.VerifyDialog
+import com.app.cdipoc.extension.Constant
 import com.app.cdipoc.extension.PrefManager
 import com.app.cdipoc.ui.camera.FaceCameraActivity
 import com.app.cdipoc.ui.camera.KtpCameraActivity
 import com.app.cdipoc.ui.contact.ContactUsActivity
+import com.app.cdipoc.ui.dukcapil.DukcapilActivity
 import com.app.cdipoc.ui.login.LoginActivity
 import com.app.cdipoc.ui.verification.VerificationActivity
-import android.R.menu
-import android.util.Log
-
-import android.view.MenuInflater
-import com.app.cdipoc.extension.Constant
-import java.text.DecimalFormat
 
 
 class HomeActivity : AppCompatActivity() {
@@ -31,10 +28,7 @@ class HomeActivity : AppCompatActivity() {
         initToolbar()
         actionListener()
 
-        val df = DecimalFormat("#.######")
-        val jck = 0.48534008860588074
-        val abc = df.format(jck)
-        Log.d("TAG", "initBundleData: " + abc)
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -46,7 +40,7 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
-        if(id == R.id.action_logout) {
+        if (id == R.id.action_logout) {
             PrefManager.logOut(this)
             val intent = Intent(this, LoginActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -68,11 +62,10 @@ class HomeActivity : AppCompatActivity() {
             startActivity(Intent(this, KtpCameraActivity::class.java))
         }
 
-        val dialog = KeyDialog(this)
-
         binding.btnPassive.setOnClickListener {
             val appId = PrefManager.getString(this, Constant.HEADER.APP_ID, "")
-            if(appId.isNullOrEmpty()) {
+            if (appId.isNullOrEmpty()) {
+                val dialog = KeyDialog(this)
                 dialog.showDialog()
             } else {
                 startActivity(
@@ -83,13 +76,35 @@ class HomeActivity : AppCompatActivity() {
         }
 
         binding.btnEnroll.setOnClickListener {
-            startActivity(Intent(this, VerificationActivity::class.java)
-                .putExtra("type", "enroll_data"))
+            startActivity(
+                Intent(this, VerificationActivity::class.java)
+                    .putExtra("type", "enroll_data")
+            )
         }
 
         binding.btnBiometric.setOnClickListener {
-            startActivity(Intent(this, VerificationActivity::class.java)
-                .putExtra("type", "biometric"))
+            startActivity(
+                Intent(this, VerificationActivity::class.java)
+                    .putExtra("type", "biometric")
+            )
+        }
+
+        binding.btnDukcapil.setOnClickListener {
+            if (PrefManager.getString(this, Constant.DUKCAPIL_VERIFY.URL, "").isNullOrEmpty()) {
+                val verifyDialog = VerifyDialog(this)
+                verifyDialog.showDialog()
+            } else {
+                startActivity(
+                    Intent(this, DukcapilActivity::class.java)
+                )
+            }
+        }
+
+        binding.btnLocal.setOnClickListener {
+            startActivity(
+                Intent(this, DukcapilActivity::class.java)
+                    .putExtra("type", "local_verify")
+            )
         }
 
         binding.tvContact.setOnClickListener {

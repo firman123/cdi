@@ -42,7 +42,7 @@ class VerificationResultActivity : AppCompatActivity() {
                     binding.tvMatch.text = "Match"
                 } else {
                     binding.tvBiometricSuccess.setTextColor(getColor(R.color.red))
-                    binding.ivCheckBiometric?.visibility = View.GONE
+                    binding.ivCheckBiometric.visibility = View.GONE
                     binding.tvMatch.setTextColor(getColor(R.color.red))
                     binding.tvBiometricSuccess.text = format.toString()
                     binding.tvMatch.text = "Unmatch"

@@ -1,14 +1,15 @@
 package com.app.cdipoc.dialog
 
 import android.content.Context
-import androidx.appcompat.app.AlertDialog
-import com.app.cdipoc.R
+import android.content.Intent
 import android.view.LayoutInflater
 import android.widget.Button
 import android.widget.EditText
-import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import com.app.cdipoc.R
 import com.app.cdipoc.extension.Constant
 import com.app.cdipoc.extension.PrefManager
+import com.app.cdipoc.ui.camera.FaceCameraActivity
 
 
 class KeyDialog(val context: Context) {
@@ -16,7 +17,7 @@ class KeyDialog(val context: Context) {
 
     fun showDialog() {
         val builder = AlertDialog.Builder(context)
-        var view = LayoutInflater.from(context)
+        val view = LayoutInflater.from(context)
             .inflate(R.layout.key_dialog, null)
         builder.setView(view)
         builder.setCancelable(true)
@@ -39,6 +40,11 @@ class KeyDialog(val context: Context) {
             PrefManager.putString(context, Constant.HEADER.APP_ID, editAPPId.text.toString())
             PrefManager.putString(context, Constant.HEADER.API_KEY, editApiKey.text.toString())
             alertDialog.dismiss()
+
+            context.startActivity(
+                Intent(context, FaceCameraActivity::class.java)
+                    .putExtra("type", "passive")
+            )
         }
 
         alertDialog = builder.create()

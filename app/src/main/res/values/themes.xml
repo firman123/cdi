@@ -20,4 +20,13 @@
         <item name="android:fontFamily">@font/poppins_regular</item>
         <item name="colorAccent">@color/black</item>
     </style>
+
+    <style name="Theme.Cdipoc.NoActionBar.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="Theme.Cdipoc.NoActionBar.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="Theme.Cdipoc.NoActionBar.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 </resources>

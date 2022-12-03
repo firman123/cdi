@@ -12,7 +12,7 @@ object RotateImageHelper {
     fun rotateImage(path: String?): Bitmap? {
         val bitmap = BitmapFactory.decodeFile(path)
         var rotate = 0
-        val exif: ExifInterface = ExifInterface(path!!)
+        val exif = ExifInterface(path!!)
         val orientation = exif.getAttributeInt(
             ExifInterface.TAG_ORIENTATION,
             ExifInterface.ORIENTATION_NORMAL

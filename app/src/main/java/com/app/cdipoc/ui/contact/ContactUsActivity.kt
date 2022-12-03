@@ -21,7 +21,7 @@ class ContactUsActivity : AppCompatActivity() {
 
         binding.llEmail.setOnClickListener {
             val intent = Intent(Intent.ACTION_SENDTO)
-            intent.setData(Uri.parse("mailto: " + getString(R.string.email)));
+            intent.data = Uri.parse("mailto: " + getString(R.string.email))
             startActivity(intent)
         }
     }

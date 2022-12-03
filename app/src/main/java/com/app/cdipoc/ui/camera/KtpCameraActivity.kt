@@ -141,24 +141,29 @@ class KtpCameraActivity : AppCompatActivity() {
     private fun sendFoto(image: String) {
         loadingDialog.startLoading()
 
+
+        val min = 100000000
+        val max = 900000000
+        val idTrans = Random().nextInt(max - min + 1) + min
+
         val body = HashMap<String, String>()
-        body["transactionId"] = Date().time.toString()
+        body["transactionId"] = idTrans.toString()
         body["transactionSource"] = "MOBILE"
         body["customer_Id"] = "Test_customer"
         body["idCardImage"] = image
 
-        viewModel.cdiOcr(this, body).observe(this, {
+        viewModel.cdiOcr(this, body).observe(this) {
             loadingDialog.stopLoading()
             binding.ivBack.visibility = View.VISIBLE
 
-            if(it.errorMessage.equals("SUCCESS", true)) {
+            if (it.errorMessage.equals("SUCCESS", true)) {
                 val intent = Intent(this, ResultActivity::class.java)
-                intent.putExtra("data", it.demographics)
+                intent.putExtra("data", it)
                 startActivity(intent)
             } else {
                 Toast.makeText(this, it.errorMessage, Toast.LENGTH_SHORT).show()
             }
-        })
+        }
     }
 
     private fun startCamera() {
@@ -173,7 +178,7 @@ class KtpCameraActivity : AppCompatActivity() {
                     Preview.Builder()
                         .setTargetRotation(it)
                         .build()
-                        .also { it ->
+                        .also {
                             it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
                         }
                 }

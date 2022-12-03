@@ -17,6 +17,6 @@ class LoadingDialog(val context: Context) {
     }
 
     fun stopLoading () {
-        alertDialog.dismiss();
+        alertDialog.dismiss()
     }
 }

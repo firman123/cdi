@@ -1,10 +1,19 @@
 package com.app.cdipoc.extension
 
 object Constant {
-    const val BASE_URL_PASSIVE = "https://api.verihubs.com/v1/"
-    const val BASE_URL_OCR = "https://live.cdi-systems.com/"
-    const val BASE_URL_ENROLL = "https://sandbox.cdi-systems.com:9443/"
-    const val BASE_URL_BIOMETRIC = "https://sandbox.cdi-systems.com:8443/"
+//    const val DEFAULT_URL_PASSIVE = "https://api.verihubs.com/v1/"
+//    const val DEFAULT_URL_OCR = "https://live.cdi-systems.com/"
+//    const val DEFAULT_URL_ENROLL = "https://sandbox.cdi-systems.com:9443/"
+//    const val DEFAULT_URL_BIOMETRIC = "https://sandbox.cdi-systems.com:8443/"
+//    const val DEFAULT_URL_BIOMETRIC = "https://sandbox.cdi-systems.com:8443/"
+//    const val DEFAULT_URL_BIOMETRIC = "https://sandbox.cdi-systems.com:8443/"
+    const val BASE_URL_PASSIVE = "passive_liveness_url"
+    const val BASE_URL_OCR = "ocr_url"
+    const val BASE_URL_ENROLL = "enroll_url"
+    const val BASE_URL_BIOMETRIC = "biometric_url"
+    const val BASE_URL_DUKCAPIL = "dukcapil_url"
+    const val BASE_URL_LOCAL_VERIFY = "local_verify"
+    const val BASE_URL_DEMOGRAPHY = "demography"
 
     const val APP_ID_VALUE = "adf4f15e-6bb1-45c0-b7a2-a1e554ba7072 "
     const val API_KEY_VALUE = "a4TltvMscWKXDhEp8X5Pv4InmNYuHc32"
@@ -24,6 +33,15 @@ object Constant {
         companion object {
             const val DATA_KTP = "data_ktp"
             const val USER_LOGIN = "user_login"
+        }
+    }
+
+    interface DUKCAPIL_VERIFY {
+        companion object {
+            const val URL = "verify_url"
+            const val USER_ID = "user_id"
+            const val THRESHOLD = "threshold"
+            const val PASSWORD = "password"
         }
     }
 

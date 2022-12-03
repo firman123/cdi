@@ -1,8 +1,10 @@
 package com.app.cdipoc.ui.camera
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -14,24 +16,17 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import com.app.cdipoc.R
 import com.app.cdipoc.databinding.ActivityFaceCameraBinding
-import com.app.cdipoc.extension.ConverterImage
 import com.app.cdipoc.dialog.LoadingDialog
+import com.app.cdipoc.extension.ConverterImage
+import com.app.cdipoc.extension.RotateImageHelper.rotateImage
+import com.app.cdipoc.model.biometric.Biometric
 import com.app.cdipoc.model.biometric.BiometricRequest
+import com.app.cdipoc.model.enrolldata.RequestEnroll
+import com.app.cdipoc.ui.dukcapil.DukcapilActivity
 import com.app.cdipoc.ui.verification.VerificationResultActivity
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
-import com.app.cdipoc.model.biometric.Biometric
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
-
-import android.os.Build
-import com.app.cdipoc.model.enrolldata.RequestEnroll
-import com.app.cdipoc.extension.RotateImageHelper.rotateImage
-import androidx.camera.core.ImageCapture
-
-
-
 
 
 class FaceCameraActivity : AppCompatActivity() {
@@ -123,6 +118,12 @@ class FaceCameraActivity : AppCompatActivity() {
                     val imageString = ConverterImage().encodeImage(rotateImage(photoFile.path)).replace("\n", "")
                     sendBiometric(nik, imageString, photoFile.path)
                 }
+
+                "dukcapil" -> {
+
+                }
+
+
             }
         }
 
@@ -155,9 +156,24 @@ class FaceCameraActivity : AppCompatActivity() {
 
                     binding.viewFinder.visibility = View.GONE
                     binding.btnCamera.visibility = View.GONE
-                    binding.ivClose.visibility = View.VISIBLE
-                    binding.btnSend.visibility = View.VISIBLE
-                    binding.ivCapture.setImageBitmap(rotateImage(photoFile.path))
+
+
+                    if(type.equals("dukcapil") || type.equals("local_verify")) {
+                        binding.ivCapture.visibility = View.INVISIBLE
+                        binding.ivCapture.setImageBitmap(rotateImage(photoFile.path))
+
+                        val imageString = ConverterImage().encodeImage(rotateImage(photoFile.path)).replace("\n", "")
+                        val intent = Intent()
+                        intent.putExtra("image_string", imageString)
+                        intent.putExtra("image_path", photoFile.path)
+                        setResult(Activity.RESULT_OK, intent)
+                        finish()
+
+                    } else {
+                        binding.ivClose.visibility = View.VISIBLE
+                        binding.btnSend.visibility = View.VISIBLE
+                        binding.ivCapture.setImageBitmap(rotateImage(photoFile.path))
+                    }
 
                 }
             })
@@ -227,7 +243,7 @@ class FaceCameraActivity : AppCompatActivity() {
         loadingDialog.startLoading()
         val body = HashMap<String, String>()
         body["image"] = image
-        viewModel.liveness(this, body).observe(this, { it ->
+        viewModel.liveness(this, body).observe(this) { it ->
             loadingDialog.stopLoading()
             if (it.status == 200) {
                 binding.clResult.visibility = View.VISIBLE
@@ -236,7 +252,7 @@ class FaceCameraActivity : AppCompatActivity() {
                 binding.ivBack.visibility = View.VISIBLE
 
 
-                if(it.liveness?.status == false) {
+                if (it.liveness?.status == false) {
                     binding.tvPercentage.setTextColor(getColor(R.color.red))
                     binding.ivCheck.setColorFilter(getColor(R.color.red))
                 }
@@ -249,13 +265,13 @@ class FaceCameraActivity : AppCompatActivity() {
             } else {
                 Toast.makeText(this, it.message, Toast.LENGTH_SHORT).show()
             }
-        })
+        }
     }
 
     private fun sendEnrollData(nik: String?, image: String, photoFile: String) {
         loadingDialog.startLoading()
         val body = RequestEnroll(nik, image)
-        viewModel.enrollData(this, body).observe(this, { it ->
+        viewModel.enrollData(this, body).observe(this) {
             loadingDialog.stopLoading()
 
             if (it.errorMessage.equals("SUCCESS", true)) {
@@ -267,7 +283,7 @@ class FaceCameraActivity : AppCompatActivity() {
             } else {
                 Toast.makeText(this, it.errorMessage, Toast.LENGTH_SHORT).show()
             }
-        })
+        }
     }
 
     private fun sendBiometric(nik: String?, image: String, uri: String) {
@@ -299,12 +315,16 @@ class FaceCameraActivity : AppCompatActivity() {
         biometricRequest.isVerifyWithImage = false
         biometricRequest.verifyIdCardFaceImage = false
 
-        viewModel.biometric(this, biometricRequest).observe(this, { it ->
+        viewModel.biometric(this, biometricRequest).observe(this) { it ->
             loadingDialog.stopLoading()
 
             if (it.errorMessage.equals("SUCCESS", true)) {
-                if(it?.verificationScore?:0.0 < 0) {
-                    Toast.makeText(this, "Not registered, please enroll before biometric verification", Toast.LENGTH_SHORT).show()
+                if ((it?.verificationScore ?: 0.0) < 0) {
+                    Toast.makeText(
+                        this,
+                        "Not registered, please enroll before biometric verification",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 } else {
                     val intent = Intent(this, VerificationResultActivity::class.java)
                     intent.putExtra("type", "biometric")
@@ -317,7 +337,11 @@ class FaceCameraActivity : AppCompatActivity() {
             } else {
                 Toast.makeText(this, it.errorMessage, Toast.LENGTH_SHORT).show()
             }
-        })
+        }
+    }
+
+    private fun sendDukcapil () {
+
     }
 
     private fun getOutputDirectory(): File {
